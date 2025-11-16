@@ -61,6 +61,23 @@ public:
         return NT_SUCCESS(status) && bytes_written == sizeof(T);
     }
 
+    std::string read_string(uintptr_t address)
+    {
+        std::int32_t string_lengt = read<std::int32_t>(address + 0x10);
+        std::uint64_t string__address = (string_lengt >= 16) ? read<std::uint64_t>(address) : address;
+
+        if (string_lengt == 0 || string_lengt > 255)
+        {
+            return "string is unknown";
+        }
+
+
+        std::vector<char> buffer(string_lengt + 1, 0);
+        ReadProcessMemory(process_handle, reinterpret_cast<void*>(string__address), buffer.data(), buffer.size(), nullptr);
+
+        return std::string(buffer.data(), string_lengt);
+    }
+
     uintptr_t allocate_memory(size_t size, ULONG alloc_type = MEM_COMMIT | MEM_RESERVE, ULONG protect = PAGE_READWRITE);
     bool free_memory(uintptr_t address, size_t size, ULONG free_type = MEM_RELEASE);
     bool protect_memory(uintptr_t address, size_t size, ULONG new_protect, ULONG* old_protect_out = nullptr);
